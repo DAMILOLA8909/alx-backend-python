@@ -1,4 +1,70 @@
-# Python Generators – Task 0: Database Setup
+# 🐍 Python Generators — 0x00 Project
+📘 Project Overview
+
+This project demonstrates the use of Python generators to efficiently fetch, process, and stream data from a MySQL database.
+Generators allow data to be loaded lazily — one item or batch at a time — improving memory efficiency and performance.
+
+---
+
+🎯 Learning Objectives
+
+By completing this project, you will learn how to:
+
+- Connect to and interact with a MySQL database using Python.
+
+- Use **generators** (yield) to stream data lazily.
+
+- Create **batch processors** for handling large datasets efficiently.
+
+- Implement **lazy pagination** for large SQL tables.
+
+---
+
+## 📂 Project Structure
+
+```bash
+python-generators-0x00/
+│
+├── seed.py                # Sets up database and seeds user data
+├── 0-main.py              # Tests seed.py setup
+├── 0-stream_users.py      # Streams rows one by one using yield
+├── 1-batch_processing.py  # Fetches and processes rows in batches
+├── 2-lazy_paginate.py     # Implements lazy pagination generator
+├── 3-main.py              # Tests the lazy pagination function
+├── user_data.csv          # Sample user dataset
+└── README.md              # Project documentation
+```
+---
+
+## ⚙️ Setup Instructions
+ 1. Install Dependencies
+
+Make sure you have Python and MySQL installed.
+Then install the required Python library:
+```bash
+pip install mysql-connector-python
+```
+
+2. Database Setup
+
+Run seed.py to create the database and populate it with sample data:
+
+```bash
+python3 0-main.py
+```
+You should see:
+
+```pgsql
+connection successful
+Table user_data created successfully
+Database ALX_prodev is present
+```
+
+
+
+---
+
+## Task 0: Database Setup
 
 ### Objective
 Create a generator that streams rows from an SQL database one by one.
@@ -100,3 +166,46 @@ def batch_processing(batch_size):
 ```bash
 $ ./2-main.py | head -n 5
 ```
+
+---
+## Task 3: Lazy Pagination — 2-lazy_paginate.py
+
+Implements a lazy pagination system that yields one page (batch) at a time.
+
+Prototype:
+```python
+def lazy_pagination(batch_size)
+```
+
+### 🧪 Example Output
+
+Running:
+```bash
+python3 3-main.py | head -n 7
+```
+
+Produces:
+```bash
+{'user_id': '00234e50-34eb-4ce2-94ec-26e3fa749796', 'name': 'Dan Altenwerth Jr.', 'email': 'Molly59@gmail.com', 'age': 67}
+{'user_id': '006bfede-724d-4cdd-a2a6-59700f40d0da', 'name': 'Glenda Wisozk', 'email': 'Miriam21@gmail.com', 'age': 119}
+...
+```
+---
+
+🧠 Key Concepts
+
+- Generator functions: Functions that yield data instead of returning it.
+
+- Lazy evaluation: Only compute or fetch data when it’s needed.
+
+- Batch processing: Divide large datasets into smaller, manageable chunks.
+
+- Pagination: Retrieve and display data in fixed-size “pages” for scalability.
+
+---
+
+## 👩🏽‍💻 Author
+
+**Damilola Ojo**
+ALX Backend Python Project – python-generators-0x00
+GitHub: https://github.com/DAMILOLA8909

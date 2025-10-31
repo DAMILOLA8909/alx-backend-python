@@ -34,3 +34,37 @@ Install using:
 ```bash
 pip install mysql-connector-python
 ```
+---
+
+## Task 1: Stream Users with Generators
+
+### Objective
+Create a Python generator that streams rows from the SQL database `user_data` table one by one.
+
+### File
+- **0-stream_users.py**
+
+### Function
+```python
+def stream_users():
+    """Streams rows one by one from user_data table."""
+```
+
+#### Usage
+```bash
+$ ./1-main.py
+```
+
+#### Example Output
+```bash
+{'user_id': '00234e50-34eb-4ce2-94ec-26e3fa749796', 'name': 'Dan Altenwerth Jr.', 'email': 'Molly59@gmail.com', 'age': 67}
+...
+```
+### Notes
+
+- Uses a Python generator (yield) for memory-efficient data streaming.
+
+- Contains only one loop.
+
+---
+

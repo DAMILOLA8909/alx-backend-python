@@ -68,3 +68,35 @@ $ ./1-main.py
 
 ---
 
+## Task 2: Batch Streaming and Processing
+
+### Objective
+Create a generator to fetch and process data in batches from the `user_data` table.
+
+### Files
+- **1-batch_processing.py**
+- **2-main.py**
+
+### Functions
+```python
+def stream_users_in_batches(batch_size):
+    """Fetches users from database in batches and yields each batch."""
+
+def batch_processing(batch_size):
+    """Processes each batch, filtering users older than 25."""
+```
+
+#### Key Notes
+
+- Uses Python’s yield for efficient streaming.
+
+- Fetches limited records at a time (fetchmany()).
+
+- No more than 3 loops are used.
+
+- Filters and prints users where age > 25.
+
+#### Example Usage
+```bash
+$ ./2-main.py | head -n 5
+```

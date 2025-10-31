@@ -170,11 +170,30 @@ $ ./2-main.py | head -n 5
 ---
 ## Task 3: Lazy Pagination — 2-lazy_paginate.py
 
-Implements a lazy pagination system that yields one page (batch) at a time.
+This task implements a lazy pagination system using Python generators to efficiently fetch and process data from a MySQL database in chunks.
 
-Prototype:
+### Functions:
+
+- paginate_users(page_size, offset) – Connects to the database alx_prodev and retrieves a limited set of user records using SQL LIMIT and OFFSET.
+
+- lazy_pagination(page_size) – A generator that yields pages of user data one at a time, fetching the next batch only when needed.
+
+### Concepts Used:
+
+- Generators (yield) for memory-efficient iteration
+
+- Database pagination using LIMIT and OFFSET
+
+- Lazy evaluation to reduce memory load when handling large datasets
+
+### Example Usage:
+
 ```python
-def lazy_pagination(batch_size)
+lazy_paginator = __import__('2-lazy_paginate').lazy_pagination
+
+for page in lazy_paginator(100):
+    for user in page:
+        print(user)
 ```
 
 ### 🧪 Example Output
@@ -192,7 +211,33 @@ Produces:
 ```
 ---
 
-🧠 Key Concepts
+## Task 4: Stream User Ages (Memory-Efficient Aggregation)
+
+This script demonstrates how to use Python generators to handle large datasets efficiently.
+It computes the average age of users without loading the entire dataset into memory.
+
+### Functions:
+
+- **stream_user_ages()** – Connects to the alx_prodev database and yields user ages one by one using a generator.
+
+- **compute_average_age()** – Iterates over the generator to calculate the average age using minimal memory.
+
+#### Key Concepts:
+
+- Generators to stream data efficiently
+
+- Memory optimization when working with large datasets
+
+- Manual aggregation without SQL functions
+
+#### Example Output:
+
+```bash
+Average age of users: 54.38
+```
+---
+
+### 🧠 Key Concepts
 
 - Generator functions: Functions that yield data instead of returning it.
 

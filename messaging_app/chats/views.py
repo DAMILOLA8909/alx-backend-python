@@ -6,9 +6,13 @@ class MessageListCreateAPIView(generics.ListCreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     
+    # In chats/views.py, update the perform_create method:
     def perform_create(self, serializer):
-        # In a real app, you'd set the sender to the current user
-        serializer.save(sender=self.request.user)
+        if self.request.user.is_authenticated:
+            serializer.save(sender=self.request.user)
+        else:
+            # Handle unauthenticated user appropriately
+            pass
 
 class MessageDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Message.objects.all()

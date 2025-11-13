@@ -69,6 +69,9 @@ DATABASES = {
     }
 }
 
+# Custom user model
+AUTH_USER_MODEL = 'chats.User'
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {

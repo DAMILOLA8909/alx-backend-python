@@ -1,14 +1,10 @@
-from django.urls import path, include  # Added include
-from rest_framework import routers  # Added routers
-from .views import ConversationViewSet, MessageViewSet, UserViewSet
+# This file can be empty or contain app-specific routes if needed
+from django.urls import path
+from . import views
 
-# Create a router and register our viewsets
-router = routers.DefaultRouter()  # Using DefaultRouter
-router.register(r'conversations', ConversationViewSet, basename='conversation')
-router.register(r'messages', MessageViewSet, basename='message')
-router.register(r'users', UserViewSet, basename='user')
+# If you need app-specific routes, you can still have them here
+# but the main API routes are now in the project urls.py
 
-# The API URLs are now determined automatically by the router
 urlpatterns = [
-    path('api/', include(router.urls)),  # Include router URLs under api/
+    # App-specific routes can go here if needed
 ]

@@ -12,14 +12,22 @@ class User(AbstractUser):
         HOST = 'host', _('Host')
         ADMIN = 'admin', _('Admin')
     
-    # Override the default id field to use UUID
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    # Use exact field name from specification
+    user_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False, 
+        db_index=True
+    )
     
-    # Remove username field, we'll use email as the primary identifier
+    # Remove username field, use email as primary identifier
     username = None
     
     # Custom fields based on specification
+    first_name = models.CharField(max_length=150, null=False, blank=False)
+    last_name = models.CharField(max_length=150, null=False, blank=False)
     email = models.EmailField(_('email address'), unique=True, null=False, blank=False)
+    password = models.CharField(_('password'), max_length=128)  # Using Django's built-in password field
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     role = models.CharField(
         max_length=10,
@@ -52,7 +60,13 @@ class Conversation(models.Model):
     """
     Conversation model to track which users are involved in a conversation
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    # Use exact field name from specification
+    conversation_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False, 
+        db_index=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -63,9 +77,9 @@ class Conversation(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        participants = self.participants.all()[:3]  # Get first 3 participants for display
+        participants = self.participants.all()[:3]
         participant_names = [str(user) for user in participants]
-        return f"Conversation {self.id} - Participants: {', '.join(participant_names)}"
+        return f"Conversation {self.conversation_id} - Participants: {', '.join(participant_names)}"
 
 class ConversationParticipant(models.Model):
     """
@@ -100,7 +114,13 @@ class Message(models.Model):
     """
     Message model containing sender and conversation information
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    # Use exact field name from specification
+    message_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False, 
+        db_index=True
+    )
     sender = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
@@ -110,12 +130,11 @@ class Message(models.Model):
         Conversation, 
         on_delete=models.CASCADE, 
         related_name='messages',
-        null=True,  # Make nullable temporarily
-        blank=True  # Allow blank in forms
+        null=True,  # Temporary for migration
+        blank=True  # Temporary for migration
     )
     message_body = models.TextField(null=False, blank=False)
     sent_at = models.DateTimeField(auto_now_add=True)
-    
     
     class Meta:
         db_table = 'message'
@@ -123,9 +142,9 @@ class Message(models.Model):
             models.Index(fields=['sender']),
             models.Index(fields=['conversation']),
             models.Index(fields=['sent_at']),
-            models.Index(fields=['conversation', 'sent_at']),  # For efficient conversation queries
+            models.Index(fields=['conversation', 'sent_at']),
         ]
         ordering = ['sent_at']
     
     def __str__(self):
-        return f"Message {self.id} from {self.sender} in {self.conversation.id}"
+        return f"Message {self.message_id} from {self.sender} in {self.conversation.conversation_id}"

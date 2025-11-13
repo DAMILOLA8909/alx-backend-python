@@ -1,7 +1,14 @@
-from django.urls import path
-from .views import MessageListCreateAPIView, MessageDetailAPIView
+from django.urls import path, include  # Added include
+from rest_framework import routers  # Added routers
+from .views import ConversationViewSet, MessageViewSet, UserViewSet
 
+# Create a router and register our viewsets
+router = routers.DefaultRouter()  # Using DefaultRouter
+router.register(r'conversations', ConversationViewSet, basename='conversation')
+router.register(r'messages', MessageViewSet, basename='message')
+router.register(r'users', UserViewSet, basename='user')
+
+# The API URLs are now determined automatically by the router
 urlpatterns = [
-    path('api/messages/', MessageListCreateAPIView.as_view(), name='message_list_create'),
-    path('api/messages/<int:pk>/', MessageDetailAPIView.as_view(), name='message_detail'),
+    path('api/', include(router.urls)),  # Include router URLs under api/
 ]

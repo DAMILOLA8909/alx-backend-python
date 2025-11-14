@@ -15,6 +15,22 @@ from .serializers import (
     MessageSummarySerializer
 )
 
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def api_root(request):
+    return HttpResponse("""
+    <h1>Messaging App API</h1>
+    <ul>
+        <li><a href="/api/conversations/">Conversations API</a></li>
+        <li><a href="/api/messages/">Messages API</a></li>
+        <li><a href="/api/users/">Users API</a></li>
+        <li><a href="/admin/">Admin Panel</a></li>
+        <li><a href="/api-auth/login/">Login</a></li>
+    </ul>
+    """)
+
 class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations

@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_nested import routers as nested_routers
 from .views import ConversationViewSet, MessageViewSet, UserViewSet
+from .views import api_root
 
 # Create a main router
 router = routers.DefaultRouter()
@@ -17,4 +18,5 @@ conversations_router.register(r'messages', MessageViewSet, basename='conversatio
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(conversations_router.urls)),
+    path('', api_root, name='api-root'),
 ]

@@ -3,6 +3,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('chats.urls')),  # Include chats URLs under api/ path
-    path('api-auth/', include('rest_framework.urls')),  # Add API authentication URLs
+    path('api/', include('chats.urls')),
+    path('api-auth/', include('rest_framework.urls')),
 ]

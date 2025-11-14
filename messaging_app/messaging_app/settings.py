@@ -23,11 +23,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_filters',
-    'rest_framework',
     
-    # Third-party apps
+    # Third-party apps - MAKE SURE THESE ARE NOT DUPLICATED
     'rest_framework',
+    'django_filters',
     
     # Local apps
     'chats',

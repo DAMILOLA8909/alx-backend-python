@@ -107,3 +107,54 @@ class OffensiveLanguageMiddleware:
     def is_rate_limited(self, ip, current_time):
         """Check if IP has exceeded the rate limit"""
         return len(self.request_history[ip]) >= self.limit
+
+class RolePermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # Define protected paths that require admin/moderator access
+        self.protected_paths = [
+            '/admin/',  # Django admin
+            '/api/delete/',  # Example: delete messages
+            '/api/ban/',  # Example: ban users
+            '/api/moderation/',  # Example: moderation actions
+        ]
+        
+    def __call__(self, request):
+        # Check if the current path requires special permissions
+        if self.requires_permission(request.path):
+            # Check if user is authenticated
+            if not request.user.is_authenticated:
+                return HttpResponseForbidden(
+                    "Access denied: Authentication required for this action."
+                )
+            
+            # Check if user has admin or moderator role
+            if not self.has_permission(request.user):
+                return HttpResponseForbidden(
+                    "Access denied: Admin or Moderator role required for this action."
+                )
+        
+        # Process the request normally
+        response = self.get_response(request)
+        return response
+    
+    def requires_permission(self, path):
+        """Check if the requested path requires special permissions"""
+        return any(path.startswith(protected_path) for protected_path in self.protected_paths)
+    
+    def has_permission(self, user):
+        """Check if user has admin or moderator role"""
+        # Method 1: Check Django's built-in is_staff and is_superuser
+        if user.is_superuser or user.is_staff:
+            return True
+        
+        # Method 2: Check custom groups
+        if user.groups.filter(name__in=['admin', 'moderator']).exists():
+            return True
+        
+        # Method 3: Check custom user profile field (if exists)
+        if hasattr(user, 'profile'):
+            if user.profile.role in ['admin', 'moderator']:
+                return True
+        
+        return False

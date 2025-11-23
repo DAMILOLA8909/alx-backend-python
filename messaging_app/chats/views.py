@@ -15,6 +15,7 @@ from .serializers import (
     MessageSummarySerializer
 )
 from .permissions import IsOwnerOrParticipant, IsConversationParticipant, IsMessageParticipant, IsOwner  # ADD THIS IMPORT
+from .permissions import IsParticipantOfConversation, IsMessageSenderOrParticipant, IsOwnerOrReadOnly
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -37,7 +38,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations
     """
-    permission_classes = [IsAuthenticated, IsConversationParticipant]  # UPDATED PERMISSIONS
+    permission_classes = [IsParticipantOfConversation]  # UPDATED
     queryset = Conversation.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['participants__user__first_name', 'participants__user__last_name']
@@ -171,7 +172,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating messages
     """
-    permission_classes = [IsAuthenticated, IsMessageParticipant]  # UPDATED PERMISSIONS
+    permission_classes = [IsParticipantOfConversation, IsMessageSenderOrParticipant]  # UPDATED
     queryset = Message.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['message_body']
@@ -284,7 +285,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for listing users (read-only)
     """
-    permission_classes = [IsAuthenticated, IsOwner]  # UPDATED PERMISSIONS
+    permission_classes = [IsParticipantOfConversation, IsOwnerOrReadOnly]  # UPDATED
     queryset = User.objects.all()
     serializer_class = UserSerializer
     

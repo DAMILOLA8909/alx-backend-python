@@ -1,0 +1,586 @@
+{
+  "info": {
+    "name": "Messaging App API",
+    "description": "Complete API testing for Django Messaging App with JWT Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "message_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get JWT Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"damsony.soji@gmail.com\",\n  \"password\": \"damilola1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "token", ""]
+            },
+            "description": "Get access and refresh tokens using email and password"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save tokens to environment variables",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                  "pm.collectionVariables.set(\"refresh_token\", jsonData.refresh);",
+                  "pm.collectionVariables.set(\"user_id\", jsonData.user_id);",
+                  "",
+                  "// Test response",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has access token\", function () {",
+                  "    pm.expect(jsonData).to.have.property('access');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has refresh token\", function () {",
+                  "    pm.expect(jsonData).to.have.property('refresh');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/refresh/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "token", "refresh", ""]
+            },
+            "description": "Refresh access token using refresh token"
+          }
+        },
+        {
+          "name": "Custom Login (with user data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"damsony.soji@gmail.com\",\n  \"password\": \"damilola1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login", ""]
+            },
+            "description": "Custom login endpoint that returns user data along with tokens"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "me", ""]
+            },
+            "description": "Get details of currently authenticated user"
+          }
+        },
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""]
+            },
+            "description": "List all users (except current user)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Conversations",
+      "item": [
+        {
+          "name": "Create Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participant_ids\": [\n    \"{{user_id}}\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/conversations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", ""]
+            },
+            "description": "Create a new conversation with participants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save conversation ID for later use",
+                  "var jsonData = pm.response.json();",
+                  "if (pm.response.code === 201 && jsonData.conversation_id) {",
+                  "    pm.collectionVariables.set(\"conversation_id\", jsonData.conversation_id);",
+                  "    console.log(\"Conversation ID saved: \" + jsonData.conversation_id);",
+                  "}",
+                  "",
+                  "// Test response",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has conversation ID\", function () {",
+                  "    pm.expect(jsonData).to.have.property('conversation_id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/conversations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", ""]
+            },
+            "description": "List all conversations for current user"
+          }
+        },
+        {
+          "name": "Get Conversation Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/conversations/{{conversation_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", "{{conversation_id}}", ""]
+            },
+            "description": "Get detailed information about a specific conversation"
+          }
+        },
+        {
+          "name": "Get Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/conversations/{{conversation_id}}/messages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", "{{conversation_id}}", "messages", ""]
+            },
+            "description": "Get all messages in a specific conversation"
+          }
+        },
+        {
+          "name": "Add Participant to Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"ANOTHER_USER_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/conversations/{{conversation_id}}/add_participant/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", "{{conversation_id}}", "add_participant", ""]
+            },
+            "description": "Add a participant to an existing conversation"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation\": \"{{conversation_id}}\",\n  \"message_body\": \"Hello, this is a test message!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ""]
+            },
+            "description": "Send a new message to a conversation"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save message ID for later use",
+                  "var jsonData = pm.response.json();",
+                  "if (pm.response.code === 201 && jsonData.message_id) {",
+                  "    pm.collectionVariables.set(\"message_id\", jsonData.message_id);",
+                  "    console.log(\"Message ID saved: \" + jsonData.message_id);",
+                  "}",
+                  "",
+                  "// Test response",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has message ID\", function () {",
+                  "    pm.expect(jsonData).to.have.property('message_id');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List All Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ""]
+            },
+            "description": "List all messages across all conversations"
+          }
+        },
+        {
+          "name": "List Messages with Pagination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/?page=1&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ""],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List messages with pagination (10 per page)"
+          }
+        },
+        {
+          "name": "Filter Messages by Conversation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/?conversation={{conversation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ""],
+              "query": [
+                {
+                  "key": "conversation",
+                  "value": "{{conversation_id}}"
+                }
+              ]
+            },
+            "description": "Filter messages by specific conversation"
+          }
+        },
+        {
+          "name": "Search Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/?search=test",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", ""],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "test"
+                }
+              ]
+            },
+            "description": "Search messages containing specific text"
+          }
+        },
+        {
+          "name": "Get Message Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/{{message_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "{{message_id}}", ""]
+            },
+            "description": "Get detailed information about a specific message"
+          }
+        },
+        {
+          "name": "Update Message",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message_body\": \"Updated message content!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/{{message_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "{{message_id}}", ""]
+            },
+            "description": "Update a message (only allowed for message sender)"
+          }
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/{{message_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "{{message_id}}", ""]
+            },
+            "description": "Delete a message (only allowed for message sender)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Security Tests",
+      "item": [
+        {
+          "name": "Access Without Token - Should Fail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/conversations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", ""]
+            },
+            "description": "Try to access protected endpoint without authentication - should return 401"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Access With Invalid Token - Should Fail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token_here"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/conversations/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "conversations", ""]
+            },
+            "description": "Try to access protected endpoint with invalid token - should return 401"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

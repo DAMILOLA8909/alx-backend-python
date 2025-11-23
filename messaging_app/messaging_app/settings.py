@@ -110,6 +110,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT first
         'rest_framework.authentication.SessionAuthentication',        # Session auth for admin
+        'rest_framework.authentication.BasicAuthentication',          # Added BasicAuthentication
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',

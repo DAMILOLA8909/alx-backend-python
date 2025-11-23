@@ -108,7 +108,7 @@ class OffensiveLanguageMiddleware:
         """Check if IP has exceeded the rate limit"""
         return len(self.request_history[ip]) >= self.limit
 
-class RolePermissionMiddleware:
+class RolepermissionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         # Define protected paths that require admin/moderator access

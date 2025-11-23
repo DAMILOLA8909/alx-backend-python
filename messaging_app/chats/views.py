@@ -14,8 +14,9 @@ from .serializers import (
     MessageCreateSerializer,
     MessageSummarySerializer
 )
-from .permissions import IsOwnerOrParticipant, IsConversationParticipant, IsMessageParticipant, IsOwner  # ADD THIS IMPORT
 from .permissions import IsParticipantOfConversation, IsMessageSenderOrParticipant, IsOwnerOrReadOnly
+from .pagination import MessagePagination
+from .filters import MessageFilter
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -30,7 +31,7 @@ def api_root(request):
         <li><a href="/api/users/">Users API</a></li>
         <li><a href="/admin/">Admin Panel</a></li>
         <li><a href="/api-auth/login/">Login</a></li>
-        <li><a href="/api/token/">JWT Token</a></li>  <!-- ADDED JWT LINK -->
+        <li><a href="/api/token/">JWT Token</a></li>
     </ul>
     """)
 
@@ -38,7 +39,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations
     """
-    permission_classes = [IsParticipantOfConversation]  # UPDATED
+    permission_classes = [IsParticipantOfConversation]
     queryset = Conversation.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['participants__user__first_name', 'participants__user__last_name']
@@ -64,7 +65,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
             participants__user=user
         ).distinct()
     
-    def perform_create(self, serializer):  # ADD THIS METHOD
+    def perform_create(self, serializer):
         """
         Ensure the current user is added as a participant when creating a conversation
         """
@@ -172,13 +173,14 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating messages
     """
-    permission_classes = [IsParticipantOfConversation, IsMessageSenderOrParticipant]  # UPDATED
+    permission_classes = [IsParticipantOfConversation, IsMessageSenderOrParticipant]
     queryset = Message.objects.all()
+    pagination_class = MessagePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    filterset_class = MessageFilter
     search_fields = ['message_body']
-    ordering_fields = ['sent_at']
+    ordering_fields = ['sent_at', 'sender__first_name']
     ordering = ['-sent_at']
-    filterset_fields = ['conversation__conversation_id', 'sender__user_id']
     
     def get_serializer_class(self):
         """
@@ -199,7 +201,7 @@ class MessageViewSet(viewsets.ModelViewSet):
             conversation__participants__user=user
         ).distinct()
     
-    def perform_create(self, serializer):  # ADD THIS METHOD
+    def perform_create(self, serializer):
         """
         Automatically set the sender to the current user
         """
@@ -207,11 +209,11 @@ class MessageViewSet(viewsets.ModelViewSet):
     
     def list(self, request, *args, **kwargs):
         """
-        List messages for the authenticated user
+        List messages for the authenticated user with pagination and filtering
         """
-        queryset = self.get_queryset()
+        queryset = self.filter_queryset(self.get_queryset())
         
-        # Filter by conversation if provided
+        # Filter by conversation if provided (backward compatibility)
         conversation_id = request.query_params.get('conversation_id')
         if conversation_id:
             try:
@@ -231,6 +233,7 @@ class MessageViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
         
+        # Apply pagination
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True, context={'request': request})
@@ -285,7 +288,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for listing users (read-only)
     """
-    permission_classes = [IsParticipantOfConversation, IsOwnerOrReadOnly]  # UPDATED
+    permission_classes = [IsParticipantOfConversation, IsOwnerOrReadOnly]
     queryset = User.objects.all()
     serializer_class = UserSerializer
     

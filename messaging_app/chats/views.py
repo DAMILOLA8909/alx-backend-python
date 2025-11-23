@@ -14,6 +14,7 @@ from .serializers import (
     MessageCreateSerializer,
     MessageSummarySerializer
 )
+from .permissions import IsOwnerOrParticipant, IsConversationParticipant, IsMessageParticipant, IsOwner  # ADD THIS IMPORT
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +29,7 @@ def api_root(request):
         <li><a href="/api/users/">Users API</a></li>
         <li><a href="/admin/">Admin Panel</a></li>
         <li><a href="/api-auth/login/">Login</a></li>
+        <li><a href="/api/token/">JWT Token</a></li>  <!-- ADDED JWT LINK -->
     </ul>
     """)
 
@@ -35,7 +37,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsConversationParticipant]  # UPDATED PERMISSIONS
     queryset = Conversation.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['participants__user__first_name', 'participants__user__last_name']
@@ -60,6 +62,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Conversation.objects.filter(
             participants__user=user
         ).distinct()
+    
+    def perform_create(self, serializer):  # ADD THIS METHOD
+        """
+        Ensure the current user is added as a participant when creating a conversation
+        """
+        conversation = serializer.save()
+        # Add current user as participant
+        ConversationParticipant.objects.create(
+            conversation=conversation,
+            user=self.request.user
+        )
     
     def list(self, request, *args, **kwargs):
         """
@@ -158,7 +171,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating messages
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsMessageParticipant]  # UPDATED PERMISSIONS
     queryset = Message.objects.all()
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['message_body']
@@ -184,6 +197,12 @@ class MessageViewSet(viewsets.ModelViewSet):
         return Message.objects.filter(
             conversation__participants__user=user
         ).distinct()
+    
+    def perform_create(self, serializer):  # ADD THIS METHOD
+        """
+        Automatically set the sender to the current user
+        """
+        serializer.save(sender=self.request.user)
     
     def list(self, request, *args, **kwargs):
         """
@@ -226,12 +245,9 @@ class MessageViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Set the sender to the current user
-        validated_data = serializer.validated_data
-        validated_data['sender'] = request.user
-        
+        # Set the sender to the current user (now handled in perform_create)
         # Verify user is a participant in the conversation
-        conversation = validated_data.get('conversation')
+        conversation = serializer.validated_data.get('conversation')
         if not ConversationParticipant.objects.filter(
             conversation=conversation, user=request.user
         ).exists():
@@ -268,17 +284,20 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for listing users (read-only)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]  # UPDATED PERMISSIONS
     queryset = User.objects.all()
-    serializer_class = UserSerializer  # Changed from UserSummarySerializer to UserSerializer
+    serializer_class = UserSerializer
     
     def get_queryset(self):
         """
-        Return all users except the current user
+        Users can only see their own profile in detail view
+        For list view, show all users except current user
         """
-        return User.objects.exclude(user_id=self.request.user.user_id)
+        if self.action == 'list':
+            return User.objects.exclude(user_id=self.request.user.user_id)
+        return User.objects.filter(user_id=self.request.user.user_id)
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def me(self, request):
         """
         Custom action to get current user details

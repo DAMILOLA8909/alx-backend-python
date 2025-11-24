@@ -1,291 +1,301 @@
-# alx-backend-python
+# Django Middleware Collection
 
-## Messaging App
+A comprehensive Django project demonstrating various custom middleware implementations for user management, security, and monitoring in a messaging application.
 
-A Django REST Framework-based messaging application that provides a complete conversation and messaging system with user management, authentication, and RESTful API endpoints.
+## 🚀 Project Overview
 
-### 🚀 Features
+This project implements multiple custom Django middlewares that provide:
+- **Request logging** for user activity monitoring
+- **Time-based access restrictions** for maintenance windows
+- **Rate limiting** to prevent spam and abuse
+- **Role-based permissions** for administrative actions
 
-- **User Management**: Custom user model with role-based permissions (Guest, Host, Admin)
+## 📁 Project Structure
 
-- **Conversation System**: Support for both 1:1 and group conversations
-
-- **Real-time Messaging**: Send and receive messages within conversations
-
-- **RESTful API**: Complete CRUD operations for all entities
-
-- **Authentication**: Session-based authentication with Django REST Framework
-
-- **Admin Interface**: Full Django admin integration for data management
-
-- **Nested Routing**: Clean API structure with nested conversation-messages endpoints
-
-### 🛠️ Tech Stack
-
-- **Backend**: Django 4.2 + Django REST Framework
-
-- **Database**: SQLite (Development) / PostgreSQL (Production-ready)
-
-- **Authentication**: Django REST Framework Session Authentication
-
-- **API Documentation**: Auto-generated DRF browsable API
-
-- **Dependencies**:
-
-    - django-rest-framework
-
-    - django-filter
-
-    - drf-nested-routers
-
-    - django-environ
-
-### 📋 Prerequisites
-
-- Python 3.8+
-
-- pip (Python package manager)
-
-### 🚀 Installation
-
-1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd messaging_app
+```pgsql
+Django-Middleware-0x03/
+├── chats/
+│ ├── middleware.py # Custom middleware implementations
+│ ├── init.py
+│ └── ... (other app files)
+├── messaging_app/
+│ ├── settings.py # Django settings with middleware configuration
+│ ├── urls.py
+│ ├── wsgi.py
+│ └── asgi.py
+├── venv/ # Virtual environment
+├── requests.log # Auto-generated request logs
+├── db.sqlite3 # SQLite database
+├── manage.py
+├── requirements.txt
+└── README.md
 ```
 
-2. Create and activate virtual environment
+---
 
+
+## 🛠️ Middleware Implementations
+
+### 1. RequestLoggingMiddleware
+**Purpose**: Logs all user requests for monitoring and debugging.
+
+**Features**:
+- Logs timestamp, username, and request path
+- Handles both authenticated and anonymous users
+- Writes to `requests.log` file with error fallback
+
+**Log Format**:
+
+2024-01-15 10:30:45.123456 - User: `admin - Path: /admin/`
+
+2024-01-15 10:30:46.789012 - User: `Anonymous - Path: /api/messages/`
+
+---
+
+
+### 2. RestrictAccessByTimeMiddleware
+**Purpose**: Enforces maintenance windows by restricting access during specific hours.
+
+**Features**:
+- Blocks access between 9:00 PM and 6:00 AM
+- Returns HTTP 403 Forbidden during restricted hours
+- Customizable time windows
+
+### 3. OffensiveLanguageMiddleware (Rate Limiting)
+**Purpose**: Prevents spam and abuse by limiting message frequency.
+
+**Features**:
+- IP-based rate limiting (5 messages per minute)
+- Sliding time window implementation
+- Thread-safe request tracking
+- Returns HTTP 403 when limit exceeded
+
+### 4. RolepermissionMiddleware
+**Purpose**: Enforces role-based access control for sensitive operations.
+
+**Features**:
+- Protects specific paths requiring admin/moderator roles
+- Multiple role verification methods:
+  - Django's built-in `is_staff` and `is_superuser`
+  - Custom user groups
+  - User profile roles
+- Returns HTTP 403 for unauthorized access
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+- Python 3.8+
+- Django 4.0+
+- Virtualenv
+
+### Steps
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/alx-backend-python.git
+   cd alx-backend-python/Django-Middleware-0x03
+   ```
+
+2. **Set up virtual environment**
 ```bash
-# Windows
-python -m venv venv
+   python -m venv venv
+
+# Windows (Git Bash/MINGW64)
+source venv/Scripts/activate
+
+# Windows (Command Prompt)
 venv\Scripts\activate
 
-# Mac/Linux
-python -m venv venv
+# Linux/Mac
 source venv/bin/activate
 ```
 
-3. Install dependencies
+3. **Install dependencies**
 
 ```bash
+pip install django
+# or if you have requirements.txt
 pip install -r requirements.txt
 ```
 
-4. Run migrations
+4. **Run migrations**
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
-5. Create superuser
+5. **Create superuser (optional)**
 
 ```bash
 python manage.py createsuperuser
 ```
 
-6. Run development server
+6. **Run development server**
 
 ```bash
 python manage.py runserver
 ```
 
-### 📚 API Endpoints
-
-#### Authentication
-
-- `GET/POST /api-auth/login/` - User login
-
-- `GET /api-auth/logout/` - User logout
-
-#### Users
-
-- `GET /api/users/` - List all users
-
-- `GET /api/users/{user_id}/` - Get user details
-
-- `GET /api/users/me/` - Get current user details
-
-#### Conversations
-
-- `GET /api/conversations/` - List user's conversations
-
-- `POST /api/conversations/` - Create new conversation
-
-- `GET /api/conversations/{conversation_id}/` - Get conversation details
-
-- `PUT/PATCH /api/conversations/{conversation_id}/` - Update conversation
-
-- `DELETE /api/conversations/{conversation_id}/` - Delete conversation
-
-### Messages
-
-- `GET /api/messages/` - List all messages
-
-- `POST /api/messages/` - Create new message
-
-- `GET /api/messages/{message_id}/` - Get message details
-
-- `GET /api/conversations/{conversation_id}/messages/` - List conversation messages
-
-- `POST /api/conversations/{conversation_id}/messages/` - Create message in conversation
-
-### 🗄️ Database Models
-
-**User**
-
-- `user_id` (UUID, Primary Key)
-
-- `email` (Unique, Required)
-
-- `first_name` (Required)
-
-- `last_name` (Required)
-
-- `password` (Required)
-
-- `phone_number` (Optional)
-
-- `role` (Enum: guest, host, admin)
-
-- `created_at` (Auto-timestamp)
-
-**Conversation**
-
-- `conversation_id` (UUID, Primary Key)
-
-- `created_at` (Auto-timestamp)
-
-**ConversationParticipant**
-
-- Junction table for many-to-many relationship between User and Conversation
-
-**Message**
-
-- `message_id` (UUID, Primary Key)
-
-- `sender` (Foreign Key to User)
-
-- `conversation` (Foreign Key to Conversation)
-
-- `message_body` (Text, Required)
-
-- `sent_at` (Auto-timestamp)
+---
 
 ### 🔧 Configuration
 
-#### Environment Variables
+#### Middleware Order in settings.py
 
-Create a .env file in the project root:
-
-```env
-DEBUG=True
-SECRET_KEY=your-secret-key-here
-ALLOWED_HOSTS=localhost,127.0.0.1
+```python
+MIDDLEWARE = [
+    # Django built-in middlewares
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    # Custom middlewares
+    'chats.middleware.RequestLoggingMiddleware',
+    'chats.middleware.RestrictAccessByTimeMiddleware',
+    'chats.middleware.OffensiveLanguageMiddleware',
+    'chats.middleware.RolepermissionMiddleware',
+]
 ```
-#### Django Settings Key Configurations
 
-- Custom User Model: `AUTH_USER_MODEL = 'chats.User'`
+ #### Customization Options
+ 
+**RequestLoggingMiddleware**
 
-- REST Framework authentication and permissions
+- Modify `log_file` path in middleware initialization
 
-- CORS settings (if needed for frontend integration)
+**RestrictAccessByTimeMiddleware**
+
+- Change restricted hours by modifying `start_restriction` and `end_restriction`
+
+**OffensiveLanguageMiddleware**
+
+- Adjust rate limits: `self.limit = 5` (messages) and `self.window = 60` (seconds)
+
+**RolepermissionMiddleware**
+
+- Add protected paths to `self.protected_paths` list
+
+- Extend role checking logic in `has_permission()` method
+
+---
 
 ### 🧪 Testing
 
-Run the test suite:
+#### Manual Testing
+
+1. Request Logging: Visit any page and check requests.log
+
+2. Time Restrictions: Test during restricted hours (9 PM - 6 AM)
+
+3. Rate Limiting: Send multiple POST requests within one minute
+
+4. Role Permissions: Access protected paths with different user roles
+
+#### Automated Testing
 
 ```bash
+# Run Django test suite
 python manage.py test
+
+# Check for any configuration issues
+python manage.py check
 ```
 
 ---
 
-### 📁 Project Structure
+### 📊 Monitoring
 
-```pgsql
-messaging_app/
-├── manage.py
-├── requirements.txt
-├── messaging_app/          # Project settings
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-└── chats/                  # Main application
-    ├── models.py           # Database models
-    ├── serializers.py      # DRF serializers
-    ├── views.py            # API viewsets
-    ├── urls.py             # App URL routes
-    ├── admin.py            # Admin configuration
-    └── migrations/         # Database migrations
-```
+#### Log Files
 
-### 👥 User Roles
+- requests.log: Contains all user request data
 
-- **Guest**: Basic user permissions, can send/receive messages
+- Location: Project root directory
 
-- **Host**: Extended permissions for property management
+- Format: Timestamp - User - Path
 
-- **Admin**: Full system access and user management
+#### Admin Interface
 
-### 🔒 Security Features
+**Access `/admin/` to:**
 
-- Password hashing and validation
+- Monitor user activity
 
-- Session-based authentication
+- Manage user roles and permissions
 
-- Permission classes for API endpoints
+- View application metrics
 
-- CORS configuration
+---
 
-- SQL injection protection via Django ORM
+### 🛡️ Security Features
 
-### 🚀 Deployment
+- IP-based rate limiting prevents brute force attacks
 
-For production deployment:
+- Time-based restrictions enable maintenance windows
 
-1. Set DEBUG = False
+- Role-based access control protects sensitive operations
 
-2. Configure proper database (PostgreSQL recommended)
+- Request logging provides audit trails
 
-3. Set up static files serving
+---
 
-4. Configure allowed hosts
+### 🔄 API Endpoints
 
-5. Set up proper SSL/TLS certificates
+The project includes example endpoints for testing middleware:
+
+`GET /` - Public access
+
+`POST /api/messages/` - Rate-limited messaging
+
+`GET /admin/` - Admin-only access
+
+`POST /api/delete/` - Moderator+ required
 
 ### 🤝 Contributing
 
 1. Fork the repository
 
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 
-3. Commit your changes
+3. Commit your changes (`git commit -m 'Add amazing feature`')
 
-4. Push to the branch
+4. Push to the branch (`git push origin feature/amazing-feature`)
 
-5. Create a Pull Request
+5. Open a Pull Request
 
-### 📄 License
-
-This project is licensed under the MIT License.
-
-### 🆘 Support
-
-For support and questions:
-
-- Check the API documentation at /api/ when server is running
-
-- Review Django REST Framework documentation
-
-- Check project issues for known problems
+### 📝 License
+This project is part of the ALX Backend Python curriculum.
 
 ---
 
-**Development Server**: http://127.0.0.1:8000/
+### 🆘 Troubleshooting
 
-**Admin Interface**: http://127.0.0.1:8000/admin/
+**Common Issues**
 
-**API Documentation**: Available via DRF browsable API at all endpoint URLs
+1. Middleware not loading
+
+    - Check middleware order in `settings.py`
+
+    - Verify import paths are correct
+
+2. Permission errors
+
+    - Ensure user authentication is working
+
+    - Check role assignments in admin interface
+
+3. Rate limiting too aggressive
+
+    - Adjust `self.limit` and `self.window` in `OffensiveLanguageMiddleware`
+
+**Getting Help**
+
+- Check Django documentation for middleware concepts
+
+- Review middleware order in Django docs
+
+- Examine generated log files for debugging
+
+### 📞 Contact
+For questions about this project, contact the ALX Backend Python program.

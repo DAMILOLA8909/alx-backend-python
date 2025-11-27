@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Account</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Delete Your Account</h1>
+        
+        <div class="warning">
+            <strong>Warning:</strong> This action cannot be undone!
+        </div>
+        
+        <p>Are you sure you want to delete your account? This will permanently:</p>
+        <ul>
+            <li>Delete all messages you sent</li>
+            <li>Delete all messages you received</li>
+            <li>Remove all your notifications</li>
+            <li>Delete your message edit history</li>
+            <li>Remove your user profile</li>
+        </ul>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure? This cannot be undone!')">
+                Yes, Delete My Account Permanently
+            </button>
+            <a href="{% url 'messaging:home' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

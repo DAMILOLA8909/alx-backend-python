@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+    <h1>Welcome to Messaging App</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background-color: #d4edda; color: #155724; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if user.is_authenticated %}
+        <p>Hello, {{ user.username }}!</p>
+        <a href="{% url 'messaging:delete_account' %}">Delete My Account</a> |
+        <a href="{% url 'admin:logout' %}">Logout</a>
+    {% else %}
+        <p>You are not logged in.</p>
+        <a href="{% url 'admin:login' %}">Login</a>
+    {% endif %}
+</body>
+</html>

@@ -16,12 +16,37 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
     is_read = models.BooleanField(default=False)
+    edited = models.BooleanField(default=False)  # New field to track edits
+    last_edited = models.DateTimeField(null=True, blank=True)  # When it was last edited
     
     class Meta:
         ordering = ['-timestamp']
     
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}"
+
+class MessageHistory(models.Model):
+    """Model to store historical versions of edited messages"""
+    message = models.ForeignKey(
+        Message, 
+        on_delete=models.CASCADE, 
+        related_name='history'
+    )
+    old_content = models.TextField()  # Content before edit
+    edited_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='message_edits'
+    )
+    edited_at = models.DateTimeField(default=timezone.now)
+    edit_reason = models.CharField(max_length=255, blank=True, null=True)  # Optional reason for edit
+    
+    class Meta:
+        ordering = ['-edited_at']
+        verbose_name_plural = "Message histories"
+    
+    def __str__(self):
+        return f"History for Message {self.message.id} edited by {self.edited_by}"
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = [

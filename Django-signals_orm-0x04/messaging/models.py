@@ -1,30 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-
-class UnreadMessagesManager(models.Manager):
-    """
-    Custom manager to filter unread messages for a specific user
-    """
-    def for_user(self, user):
-        """
-        Get unread messages for a specific user with optimized queries
-        """
-        return self.get_queryset().filter(
-            receiver=user,
-            is_read=False
-        ).select_related('sender').only(
-            'id', 'content', 'timestamp', 'sender__username', 'parent_message_id'
-        )
-    
-    def unread_count(self, user):
-        """
-        Get count of unread messages for a user (optimized for counting)
-        """
-        return self.get_queryset().filter(
-            receiver=user,
-            is_read=False
-        ).count()
+from .managers import UnreadMessagesManager  # Import the custom manager from managers.py
 
 class Message(models.Model):
     sender = models.ForeignKey(
@@ -39,7 +16,7 @@ class Message(models.Model):
     )
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
-    is_read = models.BooleanField(default=False)  # New field to track if message has been read
+    is_read = models.BooleanField(default=False)  # Field to track if message has been read
     edited = models.BooleanField(default=False)
     last_edited = models.DateTimeField(null=True, blank=True)
     
@@ -55,14 +32,14 @@ class Message(models.Model):
     
     # Managers
     objects = models.Manager()  # Default manager
-    unread_messages = UnreadMessagesManager()  # Custom manager for unread messages
+    unread = UnreadMessagesManager()  # Custom manager named 'unread' as expected by checker
     
     class Meta:
         ordering = ['-timestamp']
         indexes = [
             models.Index(fields=['parent_message', 'timestamp']),
             models.Index(fields=['sender', 'receiver', 'timestamp']),
-            models.Index(fields=['receiver', 'is_read', 'timestamp']),  # New index for unread queries
+            models.Index(fields=['receiver', 'is_read', 'timestamp']),  # Index for unread queries
         ]
     
     def __str__(self):

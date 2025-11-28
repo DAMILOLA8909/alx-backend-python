@@ -131,11 +131,37 @@ def reply_to_message(request, message_id):
     Handle replying to a specific message
     """
     if request.method == 'POST':
-        parent_message = get_object_or_404(Message, id=message_id)
         content = request.POST.get('content', '').strip()
         
-        if content:
-            # Create reply using explicit ORM query pattern
+        if not content:
+            django_messages.error(request, 'Message content cannot be empty.')
+            return redirect('messaging:conversation_list')
+        
+        # Check if this is starting a new conversation
+        if message_id == 0 or request.POST.get('start_conversation'):
+            # Start a new conversation (find the other user from context)
+            other_user_id = request.POST.get('other_user_id')
+            if other_user_id:
+                other_user = get_object_or_404(User, id=other_user_id)
+            else:
+                # Get the other user from the URL or context
+                django_messages.error(request, 'Could not determine conversation partner.')
+                return redirect('messaging:conversation_list')
+            
+            # Create new message (no parent)
+            message = Message.objects.create(
+                sender=request.user,
+                receiver=other_user,
+                content=content
+            )
+            django_messages.success(request, 'Message sent successfully!')
+            return redirect('messaging:conversation_detail', user_id=other_user.id)
+        
+        else:
+            # Reply to existing message
+            parent_message = get_object_or_404(Message, id=message_id)
+            
+            # Create reply
             reply = Message.objects.create(
                 sender=request.user,
                 receiver=parent_message.sender if request.user != parent_message.sender else parent_message.receiver,
@@ -145,10 +171,8 @@ def reply_to_message(request, message_id):
             
             django_messages.success(request, 'Reply sent successfully!')
             return redirect('messaging:message_thread', message_id=parent_message.id)
-        else:
-            django_messages.error(request, 'Reply content cannot be empty.')
     
-    return redirect('messaging:message_thread', message_id=message_id)
+    return redirect('messaging:conversation_list')
 
 @login_required
 def unread_messages(request):

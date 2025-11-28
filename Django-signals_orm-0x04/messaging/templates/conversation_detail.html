@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversation with {{ other_user.username }}</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .message {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+        }
+        .message-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .message-content {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+        .reply {
+            margin-left: 40px;
+            border-left: 3px solid #007bff;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversation with {{ other_user.username }}</h1>
+        
+        {% if thread_trees %}
+            {% for thread in thread_trees %}
+                <div class="message">
+                    <div class="message-header">
+                        From: {{ thread.message.sender.username }} 
+                        | {{ thread.message.timestamp }}
+                        {% if not thread.message.is_read %}<strong>(UNREAD)</strong>{% endif %}
+                    </div>
+                    <div class="message-content">
+                        {{ thread.message.content }}
+                    </div>
+                    
+                    <!-- Display replies recursively -->
+                    {% for reply in thread.replies %}
+                        <div class="message reply">
+                            <div class="message-header">
+                                From: {{ reply.message.sender.username }} 
+                                | {{ reply.message.timestamp }}
+                                {% if not reply.message.is_read %}<strong>(UNREAD)</strong>{% endif %}
+                            </div>
+                            <div class="message-content">
+                                {{ reply.message.content }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <!-- Reply form for this message -->
+                    <div style="margin-top: 15px;">
+                        <form method="post" action="{% url 'messaging:reply_to_message' message_id=thread.message.id %}">
+                            {% csrf_token %}
+                            <textarea name="content" rows="3" cols="50" placeholder="Reply to this message..." required></textarea>
+                            <br>
+                            <button type="submit" class="btn">Send Reply</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No messages in this conversation yet.</p>
+            
+            <!-- Form to start a new conversation -->
+            <div class="message">
+                <h3>Start a new conversation</h3>
+                <form method="post" action="{% url 'messaging:reply_to_message' message_id=0 %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="start_conversation" value="true">
+                    <textarea name="content" rows="4" cols="50" placeholder="Type your message here..." required></textarea>
+                    <br>
+                    <button type="submit" class="btn">Send Message</button>
+                </form>
+            </div>
+        {% endif %}
+        
+        <div style="margin-top: 20px;">
+            <a href="{% url 'messaging:conversation_list' %}" class="btn">Back to Conversations</a>
+            <a href="{% url 'messaging:home' %}" class="btn">Home</a>
+        </div>
+    </div>
+</body>
+</html>

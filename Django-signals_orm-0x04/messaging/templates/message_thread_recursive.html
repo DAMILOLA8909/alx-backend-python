@@ -6,6 +6,7 @@
         {% if message_node.message.edited %}
             <small>(edited)</small>
         {% endif %}
+        {% if not message_node.message.is_read %}<strong>(UNREAD)</strong>{% endif %}
     </div>
     <div class="message-content">
         {{ message_node.message.content }}

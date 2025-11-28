@@ -1,0 +1,18 @@
+<div class="message depth-{{ message_node.depth }} {% if message_node.depth > 0 %}reply{% endif %}">
+    <div class="message-header">
+        From: {{ message_node.message.sender.username }} 
+        | To: {{ message_node.message.receiver.username }}
+        | {{ message_node.message.timestamp }}
+        {% if message_node.message.edited %}
+            <small>(edited)</small>
+        {% endif %}
+    </div>
+    <div class="message-content">
+        {{ message_node.message.content }}
+    </div>
+    
+    <!-- Recursively display replies -->
+    {% for reply in message_node.replies %}
+        {% include 'message_thread_recursive.html' with message_node=reply %}
+    {% endfor %}
+</div>

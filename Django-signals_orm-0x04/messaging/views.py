@@ -150,6 +150,20 @@ def inbox(request):
     }
     return render(request, 'inbox.html', context)
 
+@cache_page(60)  # Cache the home page for 60 seconds too
+def home(request):
+    """
+    Home view with messaging app overview and navigation
+    """
+    context = {}
+    
+    if request.user.is_authenticated:
+        # Add unread count to context for logged-in users
+        unread_count = Message.unread.unread_count(request.user)
+        context['unread_count'] = unread_count
+    
+    return render(request, 'home.html', context)
+
 # Note: We don't cache these views as they involve user actions
 
 @login_required

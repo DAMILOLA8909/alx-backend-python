@@ -1,26 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Home</title>
+    <title>Messaging App Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-success {
+            background-color: #28a745;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+        }
+        .feature-list {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Messaging App</h1>
-    
-    {% if messages %}
-        {% for message in messages %}
-            <div style="background-color: #d4edda; color: #155724; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                {{ message }}
+    <div class="container">
+        <h1>Welcome to Messaging App</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if user.is_authenticated %}
+            <div class="user-info">
+                <h3>Hello, {{ user.username }}! 👋</h3>
+                <p>You're successfully logged in and ready to start messaging.</p>
             </div>
-        {% endfor %}
-    {% endif %}
-    
-    {% if user.is_authenticated %}
-        <p>Hello, {{ user.username }}!</p>
-        <a href="{% url 'messaging:delete_account' %}">Delete My Account</a> |
-        <a href="{% url 'admin:logout' %}">Logout</a>
-    {% else %}
-        <p>You are not logged in.</p>
-        <a href="{% url 'admin:login' %}">Login</a>
-    {% endif %}
+            
+            <div class="btn-container">
+                <a href="{% url 'messaging:conversation_list' %}" class="btn btn-success">
+                    📨 View Conversations
+                </a>
+                <a href="{% url 'messaging:unread_messages' %}" class="btn btn-warning">
+                    ✉️ Unread Messages 
+                    {% if unread_count %}
+                        <span style="
+                            background-color: #dc3545; 
+                            color: white; 
+                            border-radius: 50%; 
+                            padding: 2px 8px; 
+                            font-size: 12px; 
+                            margin-left: 5px;
+                        ">{{ unread_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'messaging:inbox' %}" class="btn btn-info">
+                    📥 Inbox
+                </a>
+            </div>
+            
+            <h3>App Features:</h3>
+            <ul class="feature-list">
+                <li>💬 <strong>Threaded Conversations</strong> - Reply to specific messages</li>
+                <li>👥 <strong>User Management</strong> - Message other users</li>
+                <li>🔔 <strong>Notifications</strong> - Get notified of new messages</li>
+                <li>📝 <strong>Edit History</strong> - Track message edits</li>
+                <li>⚡ <strong>Caching</strong> - Fast loading with 60-second cache</li>
+                <li>🔍 <strong>Optimized Queries</strong> - Efficient database access</li>
+            </ul>
+            
+            <div class="btn-container">
+                <a href="{% url 'messaging:delete_account' %}" class="btn" style="background-color: #dc3545;">
+                    🗑️ Delete My Account
+                </a>
+                <a href="{% url 'admin:logout' %}" class="btn" style="background-color: #6c757d;">
+                    🚪 Logout
+                </a>
+            </div>
+            
+        {% else %}
+            <div style="text-align: center;">
+                <p>You are not logged in. Please log in to access the messaging features.</p>
+                <div class="btn-container">
+                    <a href="{% url 'admin:login' %}" class="btn btn-success">
+                        🔑 Login
+                    </a>
+                </div>
+                
+                <h3>App Features:</h3>
+                <ul class="feature-list">
+                    <li>💬 Threaded conversations with reply functionality</li>
+                    <li>👥 User-to-user messaging</li>
+                    <li>🔔 Automatic notifications</li>
+                    <li>📝 Message edit history tracking</li>
+                    <li>⚡ Performance optimized with caching</li>
+                    <li>🔍 Custom managers for efficient queries</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>

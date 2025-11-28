@@ -2,6 +2,30 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+class UnreadMessagesManager(models.Manager):
+    """
+    Custom manager to filter unread messages for a specific user
+    """
+    def for_user(self, user):
+        """
+        Get unread messages for a specific user with optimized queries
+        """
+        return self.get_queryset().filter(
+            receiver=user,
+            is_read=False
+        ).select_related('sender').only(
+            'id', 'content', 'timestamp', 'sender__username', 'parent_message_id'
+        )
+    
+    def unread_count(self, user):
+        """
+        Get count of unread messages for a user (optimized for counting)
+        """
+        return self.get_queryset().filter(
+            receiver=user,
+            is_read=False
+        ).count()
+
 class Message(models.Model):
     sender = models.ForeignKey(
         User, 
@@ -15,7 +39,7 @@ class Message(models.Model):
     )
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)  # New field to track if message has been read
     edited = models.BooleanField(default=False)
     last_edited = models.DateTimeField(null=True, blank=True)
     
@@ -29,11 +53,16 @@ class Message(models.Model):
         verbose_name='Parent Message'
     )
     
+    # Managers
+    objects = models.Manager()  # Default manager
+    unread_messages = UnreadMessagesManager()  # Custom manager for unread messages
+    
     class Meta:
         ordering = ['-timestamp']
         indexes = [
             models.Index(fields=['parent_message', 'timestamp']),
             models.Index(fields=['sender', 'receiver', 'timestamp']),
+            models.Index(fields=['receiver', 'is_read', 'timestamp']),  # New index for unread queries
         ]
     
     def __str__(self):
@@ -61,6 +90,16 @@ class Message(models.Model):
     def is_root_message(self):
         """Check if this is a root message (not a reply)"""
         return self.parent_message is None
+    
+    def mark_as_read(self):
+        """Mark this message as read"""
+        self.is_read = True
+        self.save(update_fields=['is_read'])
+    
+    def mark_as_unread(self):
+        """Mark this message as unread"""
+        self.is_read = False
+        self.save(update_fields=['is_read'])
 
 class MessageHistory(models.Model):
     """Model to store historical versions of edited messages"""

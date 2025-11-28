@@ -150,6 +150,71 @@ def reply_to_message(request, message_id):
     
     return redirect('messaging:message_thread', message_id=message_id)
 
+@login_required
+def unread_messages(request):
+    """
+    Display unread messages for the logged-in user using custom manager
+    """
+    # Use the custom manager to get unread messages with optimized queries
+    unread_messages = Message.unread_messages.for_user(request.user)
+    
+    # Get unread count using the custom manager
+    unread_count = Message.unread_messages.unread_count(request.user)
+    
+    context = {
+        'unread_messages': unread_messages,
+        'unread_count': unread_count,
+    }
+    return render(request, 'unread_messages.html', context)
+
+@login_required
+def mark_message_read(request, message_id):
+    """
+    Mark a specific message as read
+    """
+    message = get_object_or_404(Message, id=message_id, receiver=request.user)
+    
+    if request.method == 'POST':
+        message.mark_as_read()
+        django_messages.success(request, 'Message marked as read.')
+    
+    return redirect('messaging:unread_messages')
+
+@login_required
+def mark_all_read(request):
+    """
+    Mark all unread messages as read
+    """
+    if request.method == 'POST':
+        # Get all unread messages for the user and mark them as read
+        unread_messages = Message.unread_messages.for_user(request.user)
+        updated_count = unread_messages.update(is_read=True)
+        
+        django_messages.success(request, f'Marked {updated_count} messages as read.')
+    
+    return redirect('messaging:unread_messages')
+
+@login_required
+def inbox(request):
+    """
+    Main inbox view showing both read and unread messages with unread highlighted
+    """
+    # Get all messages for the user with optimized queries
+    all_messages = Message.objects.filter(
+        receiver=request.user
+    ).select_related('sender').only(
+        'id', 'content', 'timestamp', 'is_read', 'sender__username', 'parent_message_id'
+    ).order_by('-timestamp')
+    
+    # Get unread count using custom manager
+    unread_count = Message.unread_messages.unread_count(request.user)
+    
+    context = {
+        'all_messages': all_messages,
+        'unread_count': unread_count,
+    }
+    return render(request, 'inbox.html', context)
+
 def home(request):
     """
     Simple home view for redirect after account deletion

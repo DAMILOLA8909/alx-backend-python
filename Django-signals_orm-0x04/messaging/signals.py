@@ -10,13 +10,16 @@ def create_message_notification(sender, instance, created, **kwargs):
     Signal to automatically create a notification when a new message is created
     """
     if created:
+        # Determine notification type based on whether it's a reply
+        notification_type = 'reply' if instance.parent_message else 'message'
+        
         # Create notification for the receiver
         Notification.objects.create(
             user=instance.receiver,
             message=instance,
-            notification_type='message'
+            notification_type=notification_type
         )
-        print(f"Notification created for {instance.receiver.username}")
+        print(f"Notification created for {instance.receiver.username} (Type: {notification_type})")
 
 @receiver(pre_save, sender=Message)
 def track_message_edits(sender, instance, **kwargs):
@@ -31,7 +34,7 @@ def track_message_edits(sender, instance, **kwargs):
                 MessageHistory.objects.create(
                     message=instance,
                     old_content=old_message.content,
-                    edited_by=instance.sender,  # Assuming sender is editing
+                    edited_by=instance.sender,
                     edit_reason="Message edited by user"
                 )
                 # Update message edit tracking fields
@@ -45,42 +48,38 @@ def track_message_edits(sender, instance, **kwargs):
 def cleanup_user_data(sender, instance, **kwargs):
     """
     Signal to clean up all related data when a user is deleted
-    This handles data that isn't covered by CASCADE deletion
     """
-    print(f"Cleaning up data for deleted user: {instance.username}")
+    user_id = instance.id
+    username = instance.username
     
-    # Delete messages where user is sender or receiver
-    # These should be handled by CASCADE, but we'll log them
-    sent_messages = Message.objects.filter(sender=instance)
-    received_messages = Message.objects.filter(receiver=instance)
+    print(f"Cleaning up data for deleted user: {username} (ID: {user_id})")
     
-    print(f"Deleting {sent_messages.count()} sent messages")
-    print(f"Deleting {received_messages.count()} received messages")
-    
-    # Delete notifications for this user
-    user_notifications = Notification.objects.filter(user=instance)
-    print(f"Deleting {user_notifications.count()} user notifications")
+    # Delete notifications for this user using ID
+    user_notifications = Notification.objects.filter(user_id=user_id)
+    notifications_count = user_notifications.count()
     user_notifications.delete()
+    print(f"Deleted {notifications_count} user notifications")
     
-    # Delete message history entries where user was the editor
-    edit_history = MessageHistory.objects.filter(edited_by=instance)
-    print(f"Deleting {edit_history.count()} message edit history entries")
+    # Delete message history entries where user was the editor using ID
+    edit_history = MessageHistory.objects.filter(edited_by_id=user_id)
+    history_count = edit_history.count()
     edit_history.delete()
+    print(f"Deleted {history_count} message edit history entries")
     
     # Additional cleanup for any orphaned data
-    # Notifications for messages that no longer exist (should be handled by CASCADE)
     orphaned_notifications = Notification.objects.filter(message__isnull=True)
-    if orphaned_notifications.exists():
-        print(f"Cleaning up {orphaned_notifications.count()} orphaned notifications")
+    orphaned_notifications_count = orphaned_notifications.count()
+    if orphaned_notifications_count > 0:
         orphaned_notifications.delete()
+        print(f"Cleaned up {orphaned_notifications_count} orphaned notifications")
     
-    # Message history for messages that no longer exist
     orphaned_history = MessageHistory.objects.filter(message__isnull=True)
-    if orphaned_history.exists():
-        print(f"Cleaning up {orphaned_history.count()} orphaned message history entries")
+    orphaned_history_count = orphaned_history.count()
+    if orphaned_history_count > 0:
         orphaned_history.delete()
+        print(f"Cleaned up {orphaned_history_count} orphaned message history entries")
     
-    print(f"Cleanup completed for user: {instance.username}")
+    print(f"Cleanup completed for user: {username}")
 
 @receiver(post_save, sender=Message)
 def send_real_time_notification(sender, instance, created, **kwargs):
@@ -88,4 +87,5 @@ def send_real_time_notification(sender, instance, created, **kwargs):
     Additional signal for potential real-time notifications
     """
     if created:
-        print(f"Real-time notification triggered for message: {instance.id}")
+        message_type = "reply" if instance.parent_message else "message"
+        print(f"Real-time notification triggered for {message_type}: {instance.id}")

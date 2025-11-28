@@ -16,14 +16,51 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
     is_read = models.BooleanField(default=False)
-    edited = models.BooleanField(default=False)  # New field to track edits
-    last_edited = models.DateTimeField(null=True, blank=True)  # When it was last edited
+    edited = models.BooleanField(default=False)
+    last_edited = models.DateTimeField(null=True, blank=True)
+    
+    # Self-referential foreign key for threaded conversations
+    parent_message = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='replies',
+        null=True,
+        blank=True,
+        verbose_name='Parent Message'
+    )
     
     class Meta:
         ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['parent_message', 'timestamp']),
+            models.Index(fields=['sender', 'receiver', 'timestamp']),
+        ]
     
     def __str__(self):
+        if self.parent_message:
+            return f"Reply from {self.sender} to {self.receiver} (Thread: {self.parent_message.id})"
         return f"Message from {self.sender} to {self.receiver}"
+    
+    def get_thread_depth(self):
+        """Calculate how deep this message is in the thread"""
+        depth = 0
+        current = self
+        while current.parent_message:
+            depth += 1
+            current = current.parent_message
+        return depth
+    
+    def get_conversation_root(self):
+        """Get the root message of this conversation thread"""
+        current = self
+        while current.parent_message:
+            current = current.parent_message
+        return current
+    
+    @property
+    def is_root_message(self):
+        """Check if this is a root message (not a reply)"""
+        return self.parent_message is None
 
 class MessageHistory(models.Model):
     """Model to store historical versions of edited messages"""
@@ -32,14 +69,14 @@ class MessageHistory(models.Model):
         on_delete=models.CASCADE, 
         related_name='history'
     )
-    old_content = models.TextField()  # Content before edit
+    old_content = models.TextField()
     edited_by = models.ForeignKey(
         User, 
         on_delete=models.CASCADE, 
         related_name='message_edits'
     )
     edited_at = models.DateTimeField(default=timezone.now)
-    edit_reason = models.CharField(max_length=255, blank=True, null=True)  # Optional reason for edit
+    edit_reason = models.CharField(max_length=255, blank=True, null=True)
     
     class Meta:
         ordering = ['-edited_at']
@@ -51,6 +88,7 @@ class MessageHistory(models.Model):
 class Notification(models.Model):
     NOTIFICATION_TYPES = [
         ('message', 'New Message'),
+        ('reply', 'New Reply'),
         ('system', 'System Notification'),
     ]
     

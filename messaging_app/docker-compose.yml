@@ -1,30 +1,59 @@
-# messaging_app/docker-compose.yml
-version: '3.8'
+# version: '3.8'
 
 services:
+  db:
+    image: mysql:8.0
+    container_name: messaging_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - messaging_network
+
   web:
     build: .
+    container_name: messaging_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DEBUG=${DEBUG}
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_ENGINE=${DB_ENGINE}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=3306
     ports:
       - "8000:8000"
-    environment:
-      - DEBUG=0
-      - DATABASE_URL=postgresql://user:password@db:5432/messaging_db
-    depends_on:
-      - db
     volumes:
       - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     command: >
-      sh -c "python manage.py migrate &&
-             gunicorn messaging_app.wsgi:application --bind 0.0.0.0:8000"
-
-  db:
-    image: postgres:13-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=messaging_db
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - messaging_network
 
 volumes:
-  postgres_data:
+  mysql_data:
+  static_volume:
+  media_volume:
+
+networks:
+  messaging_network:
+    driver: bridge
